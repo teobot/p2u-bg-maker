@@ -1,44 +1,27 @@
-"use client";
+"use server";
 
-import html2canvas from "html2canvas";
+import puppeteer from "puppeteer";
 
-export async function clientHtml2Canvas(element: HTMLElement) {
+export async function downloadRender(url: string) {
   try {
-    const canvas = await html2canvas(element, {
-      width: 1920,
-      height: 1080,
-      scale: 2, // Higher scale for better quality
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: null,
-      logging: false,
-      removeContainer: true,
-      foreignObjectRendering: true,
-      imageTimeout: 15000, // Longer timeout for images
-      onclone: (clonedDoc) => {
-        // Ensure the cloned element has proper dimensions and no scaling
-        const clonedElement = clonedDoc.body.firstElementChild as HTMLElement;
-        if (clonedElement) {
-          clonedElement.style.width = "1920px";
-          clonedElement.style.height = "1080px";
-          clonedElement.style.transform = "none";
-          clonedElement.style.position = "relative";
-          clonedElement.style.transformOrigin = "top left";
-        }
-      },
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto(url);
+    await page.setViewport({ width: 1920, height: 1080 });
+    const screenshot = await page.screenshot({
+      type: "png",
+      fullPage: true,
     });
 
-    return new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          resolve(blob);
-        } else {
-          reject(new Error("Failed to create blob from canvas"));
-        }
-      }, "image/png");
-    });
+    // Convert Buffer to base64 string
+    const base64Screenshot = Buffer.from(screenshot).toString("base64");
+
+    await browser.close();
+    return { screenshot: base64Screenshot };
   } catch (error) {
-    console.error("Error capturing screenshot with html2canvas:", error);
+    console.error(
+      error instanceof Error ? error.message : "Error downloading render"
+    );
     throw error;
   }
 }

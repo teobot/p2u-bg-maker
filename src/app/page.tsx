@@ -1,125 +1,100 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
+import { downloadRender } from "./actions/downloadRender";
+import { ColorResult, TwitterPicker } from "react-color";
+import { useSearchParams } from "next/navigation";
 
 export default function Home() {
-  const [backgroundColor, setBackgroundColor] = useState("#3B82F6");
-  const [iconColor, setIconColor] = useState("red");
-  const [logoSize, setLogoSize] = useState(160);
-  const [windowSize, setWindowSize] = useState("1920x1080");
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const searchParams = useSearchParams();
 
-  const getWindowDimensions = () => {
-    const [width, height] = windowSize.split("x").map(Number);
-    return { width, height };
-  };
+  const [backgroundColor, setBackgroundColor] = useState(
+    searchParams.get("bgColor") || "#ffffff"
+  );
+  const [iconColor, setIconColor] = useState(
+    searchParams.get("iconColor") || "#3b82f6"
+  );
 
   const getRenderUrl = () => {
-    const { width, height } = getWindowDimensions();
     const params = new URLSearchParams({
-      bg: backgroundColor,
-      icon: iconColor,
-      logo: logoSize.toString(),
-      width: width.toString(),
-      height: height.toString(),
+      bgColor: backgroundColor,
+      iconColor: iconColor,
     });
-    console.log(`/render?${params.toString()}`);
-    return `/render?${params.toString()}`;
+    return `https://p2u-renderer.vercel.app/?${params.toString()}`;
   };
 
   const downloadImage = async () => {
     try {
+      const { screenshot } = await downloadRender(getRenderUrl());
+
+      // Convert base64 to blob
+      const byteCharacters = atob(screenshot);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: "image/png" });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "pharmacy2u-background.png";
+      link.click();
+      URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error with html2canvas:", error);
-      alert("html2canvas failed. This may be due to CORS restrictions.");
+      alert(error);
     }
   };
 
   return (
-    <div className="container mx-auto bg-white">
-      <div className="flex min-h-screen flex-row bg-gray-100">
+    <div className="font-sans container mx-auto">
+      <div className="flex min-h-screen flex-row">
         {/* Controls Panel */}
-        <div className="shadow-lg p-5 space-y-4">
-          {/* Background Color */}
-          <div>
-            <label
-              htmlFor="bg-color-picker"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Background Color
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                id="bg-color-picker"
-                type="color"
-                value={backgroundColor}
-                onChange={(e) => setBackgroundColor(e.target.value)}
-                className="w-12 h-12 rounded border-2 border-gray-300 cursor-pointer"
-                aria-label="Choose background color"
+        <div className="py-5 pr-10 flex flex-col">
+          <div className="flex flex-col flex-1 space-y-6">
+            <div>
+              <label
+                htmlFor="bg-color-picker"
+                className="block text-sm font-medium text-gray-700 mb-4"
+              >
+                Background Color
+              </label>
+              <TwitterPicker
+                color={backgroundColor}
+                onChange={(color: ColorResult) => setBackgroundColor(color.hex)}
               />
-              <input
-                id="bg-color-text"
-                type="text"
-                value={backgroundColor}
-                onChange={(e) => setBackgroundColor(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="#ffffff"
-                aria-label="Background color hex value"
-              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="icon-color-picker"
+                className="block text-sm font-medium text-gray-700 mb-4"
+              >
+                Icon Color
+              </label>
+              <div className="flex items-center gap-3">
+                <TwitterPicker
+                  color={iconColor}
+                  onChange={(color: ColorResult) => setIconColor(color.hex)}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Icon Color */}
-          <div>
-            <label
-              htmlFor="icon-color-picker"
-              className="block text-sm font-medium text-gray-700 mb-2"
+          <div className="flex flex-col gap-4 pt-4">
+            <button
+              onClick={() => {
+                // set the url to the current url with the search params
+                const url = new URL(window.location.href);
+                url.searchParams.set("bgColor", backgroundColor);
+                url.searchParams.set("iconColor", iconColor);
+                window.history.pushState({}, "", url.toString());
+              }}
+              className="flex-1 text-xs bg-green-600 text-white px-2 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
             >
-              Icon Color
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                id="icon-color-picker"
-                type="color"
-                value={iconColor}
-                onChange={(e) => setIconColor(e.target.value)}
-                className="w-12 h-12 rounded border-2 border-gray-300 cursor-pointer"
-                aria-label="Choose icon color"
-              />
-              <input
-                id="icon-color-text"
-                type="text"
-                value={iconColor}
-                onChange={(e) => setIconColor(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="#3b82f6"
-                aria-label="Icon color hex value"
-              />
-            </div>
-          </div>
-
-          {/* Logo Size */}
-          <div>
-            <label
-              htmlFor="logo-size-slider"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Logo Size: {logoSize}px
-            </label>
-            <input
-              id="logo-size-slider"
-              type="range"
-              min="40"
-              max="150"
-              value={logoSize}
-              onChange={(e) => setLogoSize(Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-              aria-label="Adjust logo size"
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4 pt-4">
+              Share
+            </button>
             <button
               onClick={downloadImage}
               className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
@@ -129,9 +104,19 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Preview */}
-        <div className="rounded-lg shadow-lg flex flex-1 justify-center items-center bg-gray-100 p-8">
-          <div className="w-full max-w-4xl aspect-video"></div>
+        <div className="rounded-lg shadow-lg flex flex-1 justify-center items-center bg-gray-100 lg:p-8">
+          <div className="w-full max-w-4xl aspect-video overflow-hidden border-2 border-gray-200 rounded-xl">
+            <iframe
+              src={getRenderUrl()}
+              className="overflow-hidden"
+              style={{
+                width: "1920px",
+                height: "1080px",
+                transform: "scale(0.5)",
+                transformOrigin: "top left",
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>
