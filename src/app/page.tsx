@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { downloadRender } from "./actions/downloadRender";
 import { ColorResult, TwitterPicker } from "react-color";
 import { useSearchParams } from "next/navigation";
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams();
 
   const [backgroundColor, setBackgroundColor] = useState(
@@ -120,5 +120,13 @@ export default function Home() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
