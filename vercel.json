@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "src/app/actions/downloadRender.ts": {
+      "maxDuration": 30
+    }
+  }
+}

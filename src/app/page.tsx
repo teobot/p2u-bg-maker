@@ -61,6 +61,7 @@ function HomeContent() {
                 Background Color
               </label>
               <TwitterPicker
+                key="bg-color-picker"
                 color={backgroundColor}
                 onChange={(color: ColorResult) => setBackgroundColor(color.hex)}
               />
@@ -75,6 +76,7 @@ function HomeContent() {
               </label>
               <div className="flex items-center gap-3">
                 <TwitterPicker
+                  key="icon-color-picker"
                   color={iconColor}
                   onChange={(color: ColorResult) => setIconColor(color.hex)}
                 />
