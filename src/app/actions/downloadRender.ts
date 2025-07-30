@@ -1,21 +1,20 @@
 "use server";
 
 import puppeteer from "puppeteer";
+import chromium from "@sparticuz/chromium-min";
+
+const isLocal = !!process.env.CHROME_EXECUTABLE_PATH;
 
 export async function downloadRender(url: string) {
   let browser;
   try {
     browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        "--no-first-run",
-        "--no-zygote",
-        "--disable-gpu",
-      ],
+      headless: chromium.headless,
+
+      args: isLocal ? puppeteer.defaultArgs() : chromium.args,
+      executablePath:
+        process.env.CHROME_EXECUTABLE_PATH ||
+        (await chromium.executablePath("<Your Chromium URL>")),
     });
 
     const page = await browser.newPage();

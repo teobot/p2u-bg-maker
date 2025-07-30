@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ["puppeteer"],
-  },
+  // keeps the big native binaries out of your JS bundle
+  serverExternalPackages: ["@sparticuz/chromium", "puppeteer-core"],
   async headers() {
     return [
       {
