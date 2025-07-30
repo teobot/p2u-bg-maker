@@ -1,20 +1,18 @@
 "use server";
 
-import puppeteer from "puppeteer";
-import chromium from "@sparticuz/chromium-min";
-
-const isLocal = !!process.env.CHROME_EXECUTABLE_PATH;
+import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
+const isLocal = process.env.IS_LOCAL === "true";
 
 export async function downloadRender(url: string) {
-  let browser;
   try {
-    browser = await puppeteer.launch({
-      headless: chromium.headless,
-
-      args: isLocal ? puppeteer.defaultArgs() : chromium.args,
-      executablePath:
-        process.env.CHROME_EXECUTABLE_PATH ||
-        (await chromium.executablePath("<Your Chromium URL>")),
+    const browser = await puppeteer.launch({
+      executablePath: isLocal
+        ? process.env.CHROME_EXECUTABLE_PATH // local Chrome
+        : await chromium.executablePath(),
+      args: chromium.args,
+      headless: true,
+      defaultViewport: { width: 1920, height: 1080 },
     });
 
     const page = await browser.newPage();
@@ -35,9 +33,5 @@ export async function downloadRender(url: string) {
       error instanceof Error ? error.message : "Error downloading render"
     );
     throw error;
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
 }

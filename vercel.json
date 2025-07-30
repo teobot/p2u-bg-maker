@@ -1,7 +1,8 @@
 {
   "functions": {
-    "src/app/actions/downloadRender.ts": {
-      "maxDuration": 30
+    "app/actions/downloadRender.ts": {
+      "memory": 1024,
+      "maxDuration": 60
     }
   }
 }
